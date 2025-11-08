@@ -1,6 +1,8 @@
 #!/bin/sh
-REPO_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
+RETRIES=5
+RETRY_TIMEOUT=120
 REPO_NAME="aur-fresh-builds"
+REPO_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
 cd "$REPO_DIR"
 echo "[UPDATE] Creating $REPO_NAME DB"
 
@@ -23,6 +25,16 @@ mv $REPO_NAME.files.tar.gz $REPO_NAME.files &> /dev/null
 mv $REPO_NAME.db.tar.gz.sig $REPO_NAME.db.sig &> /dev/null
 mv $REPO_NAME.files.tar.gz.sig $REPO_NAME.files.sig &> /dev/null
 
-git add . && \
-git commit -m "Software updates, performance and stability optimisations for optimised user experience." && \
-git push -u origin main
+# Push changes
+CONTINUE=0; while [ $CONTINUE == 0 ]; do
+    git add . && \
+    git commit -m "Software updates, performance and stability optimisations for optimised user experience." && \
+    git push -u origin main && CONTINUE=1
+    if [ $CONTINUE == 0 ]; then
+        if [ $RETRIES -gt 0 ]; then
+            echo "Network error, retrying $RETRIES more times in ${RETRY_TIMEOUT}s..."
+            RETRIES="$(expr $RETRIES - 1)"
+            sleep $RETRY_TIMEOUT
+        else echo -e "\e[1;97;101m[ERROR]\e[0m Network connection failed, aborting..." && exit 101; fi
+    fi
+done; return 0
