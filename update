@@ -37,4 +37,4 @@ CONTINUE=0; while [ $CONTINUE == 0 ]; do
             sleep $RETRY_TIMEOUT
         else echo -e "\e[1;97;101m[ERROR]\e[0m Network connection failed, aborting..." && exit 101; fi
     fi
-done; return 0
+done
